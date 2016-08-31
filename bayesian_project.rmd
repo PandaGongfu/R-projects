@@ -1,0 +1,168 @@
+---
+title: "Bayesian modeling and prediction for movies"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+library(BAS)
+```
+
+### Load data
+
+```{r load-data}
+load("movies.Rdata")
+```
+
+
+* * *
+
+## Part 1: Data
+The data set is collected from rottentomato and imdb.It comprised of 651 randomly sampled movies produced and released before 2016. Since the sample is representative of the population, the results can be generalized.
+
+The analysis merely examines the correlation between the variables and the audience score, and it does not provide causal inference. 
+
+* * *
+
+## Part 2: Data manipulation
+
+```{r}
+movies$feature_film <- factor(with(movies, ifelse(title_type=='Feature Film','yes','no')))
+movies$drama <- factor(with(movies, ifelse(genre=='Drama','yes','no')))
+movies$mpaa_rating_R <- factor(with(movies, ifelse(mpaa_rating=='R','yes','no')))
+movies$oscar_season <- factor(with(movies, ifelse(thtr_rel_month %in% c(10,11,12),'yes','no')))
+movies$summer_season <- factor(with(movies, ifelse(thtr_rel_month %in% c(5,6,7,8),'yes','no')))
+```
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+The graphs below explore the relationship between audience scores and the five constructed features.
+```{r}
+par(mfrow=c(1,2))
+with(movies,plot(feature_film, audience_score,'xlab'='Feature Film', ylab='Audience Score',col=c('green','pink')))
+with(movies,plot(drama, audience_score,'xlab'='Drama', ylab='Audience Score',col=c('green','pink')))
+par(mfrow=c(1,2))
+with(movies,plot(mpaa_rating_R, audience_score,'xlab'='R Rated', ylab='Audience Score',col=c('green','pink')))
+par(mfrow=c(1,2))
+with(movies,plot(oscar_season, audience_score,'xlab'='Oscar Season', ylab='Audience Score',col=c('green','pink')))
+with(movies,plot(summer_season, audience_score,'xlab'='Summer season', ylab='Audience Score',col=c('green','pink')))
+
+```
+
+As show in the graphs, being a feature film significantly reduces the median score and widens the interquartile range. Being drama has the opposite effect. R rating and seasonality variables do not seem to have meaningful impact on how the score is distributed, except that oscar season marginally increases the median. 
+
+The table below shows the number of movies fall into each of the categories. We should be aware the conclusion we drew on the feature film becasue the non-feature films only account for less than 10% of the sample. 
+```{r}
+summary(subset(movies, select=c(feature_film, drama, mpaa_rating_R, oscar_season,summer_season)))
+
+```
+
+
+
+* * *
+
+## Part 4: Modeling
+
+Recursively remove varibles that would result in lower BIC until no further improvement possible.
+
+
+```{r}
+movies_full = subset(movies, select=c(audience_score, feature_film, drama, runtime, mpaa_rating_R, thtr_rel_year, oscar_season, summer_season,imdb_rating, imdb_num_votes, critics_score, best_pic_nom, best_pic_win, best_actor_win, best_actress_win, best_dir_win, top200_box))
+
+
+BRM_full = lm(audience_score ~ ., data=na.omit(movies_full))
+num_var = length(movies_full)-1
+movies_BRM = movies_full
+
+while(num_var > 1)
+{
+  rm_col = 0
+  BRM = lm(audience_score ~ ., data=na.omit(movies_BRM))
+  BIC_low = BIC(BRM)
+  for(j in 2:length(movies_BRM))
+  {
+    movies_sub = movies_BRM[,-j]
+    BRM_sub = lm(audience_score ~ ., data=na.omit(movies_sub))
+    if(BIC(BRM_sub) < BIC_low)
+    {
+      rm_col = j
+      BIC_low = BIC(BRM_sub)
+    }
+  }
+  if(rm_col >0)
+  {
+    movies_BRM = movies_BRM[, -rm_col]
+    num_var = num_var - 1
+  }
+  else{ break }
+}
+final_data = na.omit(movies_BRM)
+BRM = lm(audience_score ~ ., data=final_data)
+BRM$coefficients
+
+```
+
+Our final model consists of only three variables: runtime, imdb_rating, and critics_score. 
+
+Model Interpretation:
+
+The most significant explanatory variable is imdb_rating, and it has negative correlation with the length of the movie and the score from critics. 
+
+Model Diagnostics:
+
+The graph below shows the scatter plot of residual against independent variables. It appears that the constant variance assumption is not violated.
+
+```{r}
+par(mfrow=c(1,3))
+plot(final_data$runtime, BRM$residuals)
+plot(final_data$imdb_rating, BRM$residuals)
+plot(final_data$critics_score, BRM$residuals)
+```
+
+The normality of the residual is also checked and it appears that the residuals have right skew. 
+
+```{r}
+par(mfrow=c(1,2))
+qqnorm(BRM$residuals)
+qqline(BRM$residuals)
+hist(BRM$residuals)
+
+```
+
+* * *
+
+## Part 5: Prediction
+
+
+```{r}
+
+newdata =data.frame(runtime = 123, imdb_rating = 7.1, critics_score = 57)
+predict.lm(BRM, newdata)
+```
+
+I chose Jason Bourne(2016) for prediction purpose. Data is obtained from IMDB and rotten tomato. 
+
+Given the running time 123 munites, IMDB rating of 7.1 and critics score of 57, our prediction is 70.5, which is not far from the 63 score from rotten tomato. 
+
+
+* * *
+
+## Part 6: Conclusion
+
+We were able to come up with a relative parsimonious model that has reasonble prediction capablity based on BIC. 
+
+Critera other than BIC should be further investigated to see if it's possible to produce a better model.
+
+I did not consider remove outliers and did not examine the multicolinearity in the variables, which could have some impacts on the result. 
