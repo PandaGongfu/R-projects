@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <style>
+    svg {
+      background-color: #eee;
+    }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+  </head>
+
+
+  <body>  
+    <div class="container">
+    <div class="header">
+      <h1 style="font-size: 200%;text-align:center;color:steelblue";>D3 Challenge</h1>
+
+    </div>
+    <div id="chart1"  align="center"></div>
+    <script>
+        var svg = d3.select("#chart1").append("svg")
+                    .attr("width", 300)
+                    .attr("height", 100);
+        var colorScale = d3.scale.linear()
+        					.domain([-1,0,1])
+        					.range(["red","white","green"]);
+        pos = [20,50,90,150,230]
+        svg.selectAll("circle")
+        	.data(pos)
+        	.enter().append("circle")
+	    	.attr("cy", 60)
+	    	.attr("cx", function(d) { return d; })
+	    	.attr("r", function(d) { return d/10; })
+	    	.style("fill", function(d) { return colorScale((d-90)/300); });
+     </script>  
+
+    <div id="chart2"  align="center"></div>
+    <script>
+        var svg = d3.select("#chart2").append("svg")
+                    .attr("width", 300)
+                    .attr("height", 300);
+        var colorScale = d3.scale.category10();
+        pos = [20,50,90,150,230]
+
+        svg.selectAll("circle")
+        	.data(pos)
+        	.enter().append("circle")
+	    	.attr("cy", function(d) { return d; })
+	    	.attr("cx", function(d) { return d; })
+	    	.attr("r", function(d) { return d/10; })
+	    	.style("fill", function(d, i) { return colorScale(i+5); });
+      </script> 
+
+    <div id="chart3"  align="center"></div>
+    <script>
+	    function colores_google(n) {
+	    var colores_g = ["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
+	    return colores_g[n % colores_g.length];
+		}
+
+        var svg = d3.select("#chart3").append("svg")
+                    .attr("width", 300)
+                    .attr("height", 300);
+
+        pos = [50,80,110,170,250]
+
+        svg.selectAll("circle")
+        	.data(pos)
+        	.enter().append("circle")
+	    	.attr("cy", function(d) { return d+Math.random()*50; })
+	    	.attr("cx", function(d) { return d-Math.random()*50; })
+	    	.attr("r", function(d) { return d/10; })
+	    	.style("fill", function(d, i) { return colores_google(i+5); });
+      </script> 
+
+    <div id="chart4"  align="center"></div>
+    <script>
+        var svg = d3.select("#chart4").append("svg")
+                    .attr("width", 200)
+                    .attr("height", 100);
+        var colorScale = d3.scale.category10();
+        pos = [50,90,150]
+
+        svg.selectAll("circle")
+        	.data(pos)
+        	.enter().append("circle")
+	    	.attr("cy", function(d) { return d/2; })
+	    	.attr("cx", function(d) { return d; })
+	    	.attr("r", function(d) { return d/10; })
+	    	.style("fill", function(d, i) { return colorScale(i+5); });
+	    svg.selectAll("rect")
+		  .data([175])
+		  .enter().append("rect")
+		  .attr("x", function(d) { return d; })
+		  .attr("width", 25)
+		  .attr("height", 100)
+		  .style("fill", "steelblue");
+     </script> 
+
+    <div id="chart5"  align="center"></div>
+    <script>
+        var svg = d3.select("#chart5").append("svg")
+                    .attr({"width": 200, "height": 100});
+
+		var triangle = d3.svg.symbol().type("triangle-up")
+						.size(function(d){ return d; });
+
+		svg.selectAll("path")
+			.data([2000])
+			.enter()
+			.append('path')
+		    .attr("d", triangle)
+		    .attr("fill", "gold")
+		    .attr("stroke", "deepskyblue")
+		    .attr("stroke-width", 3)
+		    .attr("transform", function(d) { return "translate(" + (100) + "," + (50) + ")"; })
+     </script> 
+
+    <div id="chart6"  align="center"></div>
+    <script>
+        var svg = d3.select("#chart6").append("svg")
+                    .attr({"width": 200, "height": 200});
+
+		var triangle = d3.svg.symbol().type("triangle-up")
+						.size(2000);
+
+		svg.selectAll("path")
+			.data([{x:100, y:50}, {x:66, y:110}, {x:134, y:110}])
+			.enter()
+			.append('path')
+		    .attr("d", triangle)
+		    .attr("fill", "gold")
+		    .attr("stroke", "deepskyblue")
+		    .attr("stroke-width", 3)
+		    .attr("transform", function(d) { return "translate(" + (d.x) + "," + (d.y) + ")"; })
+     </script> 
+
+
+  </body>
